@@ -13,6 +13,7 @@ type OrderService interface {
 
 func HandleGetOrder(orderService OrderService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// TODO:
+		// orderUID := r.URL.Query().Get()
+		w.Write([]byte(`hello world`))
 	}
 }

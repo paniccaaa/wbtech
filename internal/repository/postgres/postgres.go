@@ -30,3 +30,7 @@ func NewRepository(DB_URI string) order.Storage {
 func (r *Repository) GetOrder(ctx context.Context, order_uid model.OrderUID) (model.Order, error) {
 	return model.Order{}, nil
 }
+
+func (r *Repository) SaveOrder(ctx context.Context, order model.Order) error {
+	return nil
+}

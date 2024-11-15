@@ -9,7 +9,7 @@ import (
 func InitRouter(orderService api.OrderService) http.Handler {
 	r := http.NewServeMux()
 
-	r.HandleFunc("GET /order/{order_uid}", api.HandleGetOrder(orderService))
+	r.HandleFunc("GET /order", api.HandleGetOrder(orderService))
 
 	return r
 }

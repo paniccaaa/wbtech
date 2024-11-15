@@ -9,6 +9,7 @@ import (
 
 type Storage interface {
 	GetOrder(ctx context.Context, order_uid model.OrderUID) (model.Order, error)
+	SaveOrder(ctx context.Context, order model.Order) error
 }
 
 type Service struct {
@@ -22,6 +23,10 @@ func NewService(ordersRepo Storage) order.OrderService {
 }
 
 func (s *Service) GetOrder(ctx context.Context, order_uid model.OrderUID) (model.Order, error) {
-	// TODO:
+
 	return model.Order{}, nil
+}
+
+func (s *Service) SaveOrder(ctx context.Context, order model.Order) error {
+	return s.ordersRepository.SaveOrder(ctx, order)
 }

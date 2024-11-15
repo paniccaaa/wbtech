@@ -5,7 +5,7 @@ import "time"
 type OrderUID string
 
 type Order struct {
-	OrderUID          string    `json:"order_uid"`
+	OrderUID          OrderUID  `json:"order_uid"`
 	TrackNumber       string    `json:"track_number"`
 	Entry             string    `json:"entry"`
 	Delivery          Delivery  `json:"delivery"`

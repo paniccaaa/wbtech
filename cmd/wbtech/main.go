@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry"
+	"github.com/paniccaaa/wbtech/internal/api/kafka"
 	"github.com/paniccaaa/wbtech/internal/app"
-	"github.com/paniccaaa/wbtech/internal/app/kafka"
 	"github.com/paniccaaa/wbtech/internal/repository/postgres"
 	"github.com/paniccaaa/wbtech/internal/services/order"
 )
@@ -19,7 +19,10 @@ import (
 func main() {
 	cfg := app.NewConfig()
 
-	db := postgres.NewRepository(cfg.DB_URI)
+	db, err := postgres.NewRepository(cfg.DB_URI)
+	if err != nil {
+		log.Fatalf("failed to init db: %v", err)
+	}
 
 	orderService := order.NewService(db)
 	router := app.InitRouter(orderService)
@@ -48,7 +51,7 @@ func main() {
 	}
 	defer producer.Close()
 
-	consumer, err := kafka.NewConsumer(cfg, schemaClient)
+	consumer, err := kafka.NewConsumer(cfg, schemaClient, orderService)
 	if err != nil {
 		log.Fatalf("failed to create consumer: %v", err)
 	}

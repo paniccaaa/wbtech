@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -12,13 +13,18 @@ import (
 	"github.com/paniccaaa/wbtech/internal/model"
 )
 
+type SaveProvider interface {
+	SaveOrder(ctx context.Context, order model.Order) error
+}
+
 type Consumer struct {
 	client       *kafka.Consumer
 	cfgKafka     app.Kafka
 	schemaClient schemaregistry.Client
+	order        SaveProvider
 }
 
-func NewConsumer(cfg app.Config, schemaClient schemaregistry.Client) (*Consumer, error) {
+func NewConsumer(cfg app.Config, schemaClient schemaregistry.Client, order SaveProvider) (*Consumer, error) {
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": cfg.Kafka.URI,
 		"group.id":          "group-id",
@@ -33,6 +39,7 @@ func NewConsumer(cfg app.Config, schemaClient schemaregistry.Client) (*Consumer,
 		client:       c,
 		schemaClient: schemaClient,
 		cfgKafka:     cfg.Kafka,
+		order:        order,
 	}, nil
 }
 
@@ -55,12 +62,11 @@ func (c *Consumer) ListenAndConsume() error {
 }
 
 func (c *Consumer) consumePartitionMessages(partition int32) error {
-	err := c.client.Assign([]kafka.TopicPartition{
-		{
+	err := c.client.Assign(
+		[]kafka.TopicPartition{{
 			Topic:     &c.cfgKafka.Topic,
 			Partition: partition,
-		},
-	})
+		}})
 	if err != nil {
 		return fmt.Errorf("assign partition: %w", err)
 	}
@@ -80,19 +86,36 @@ func (c *Consumer) consumePartitionMessages(partition int32) error {
 			continue
 		}
 
-		switch e := ev.(type) {
-		case *kafka.Message:
-			var value model.Order
-			err := deser.DeserializeInto(*e.TopicPartition.Topic, e.Value, &value)
-			if err != nil {
-				log.Printf("Failed to deserialize message: %s", err)
-			} else {
-				log.Printf("Received message from partition %d: %+v\n", partition, value)
-			}
-		case kafka.Error:
-			log.Printf("Error: %v\n", e)
-		default:
-			log.Printf("Ignored %v\n", e)
+		if err := c.processEvent(ev, deser, partition); err != nil {
+			log.Printf("Failed to process event: %v", err)
 		}
 	}
+}
+
+func (c *Consumer) processEvent(ev kafka.Event, deser *jsonschema.Deserializer, partition int32) error {
+	switch e := ev.(type) {
+	case *kafka.Message:
+		return c.handleMessage(e, deser, partition)
+	case kafka.Error:
+		log.Printf("Kafka error: %v", e)
+		return nil
+	default:
+		log.Printf("Ignored unexpected event: %v", e)
+		return nil
+	}
+}
+
+func (c *Consumer) handleMessage(msg *kafka.Message, deser *jsonschema.Deserializer, partition int32) error {
+	var order model.Order
+	if err := deser.DeserializeInto(*msg.TopicPartition.Topic, msg.Value, &order); err != nil {
+		return fmt.Errorf("failed to deserialize message: %w", err)
+	}
+
+	if err := c.order.SaveOrder(context.Background(), order); err != nil {
+		return fmt.Errorf("failed to save order: %w", err)
+	}
+
+	log.Printf("Received and saved message from partition %d: %+v\n", partition, order)
+
+	return nil
 }

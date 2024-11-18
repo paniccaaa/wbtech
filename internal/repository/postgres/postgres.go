@@ -158,6 +158,5 @@ func (r *Repository) SaveOrder(ctx context.Context, order model.Order) error {
 		return fmt.Errorf("save order: %w", err)
 	}
 
-	// r.cache.Set(order)
 	return nil
 }

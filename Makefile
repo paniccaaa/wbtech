@@ -8,3 +8,6 @@ goose-down:
 
 connect:
 	@psql $(PG)
+
+mocks:
+	mockgen -source=internal/services/order/service.go -destination=internal/services/order/mock/service_mock.go -package mock_order

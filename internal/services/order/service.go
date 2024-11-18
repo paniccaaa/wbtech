@@ -7,7 +7,7 @@ import (
 )
 
 type Storage interface {
-	GetOrder(ctx context.Context, order_uid model.OrderUID) (model.Order, error)
+	GetOrder(ctx context.Context, orderUID model.OrderUID) (model.Order, error)
 	SaveOrder(ctx context.Context, order model.Order) error
 }
 
@@ -21,8 +21,8 @@ func NewService(ordersRepo Storage) *Service {
 	}
 }
 
-func (s *Service) GetOrder(ctx context.Context, order_uid model.OrderUID) (model.Order, error) {
-	return s.ordersRepository.GetOrder(ctx, order_uid)
+func (s *Service) GetOrder(ctx context.Context, orderUID model.OrderUID) (model.Order, error) {
+	return s.ordersRepository.GetOrder(ctx, orderUID)
 }
 
 func (s *Service) SaveOrder(ctx context.Context, order model.Order) error {

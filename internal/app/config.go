@@ -21,10 +21,10 @@ func NewConfig() Config {
 		DB_URI: "postgres://wbuser:wbpassword@localhost:5435/postgres?sslmode=disable",
 		Kafka: Kafka{
 			URI:   "localhost:9092",
-			Topic: "orders-topic",
+			Topic: "orders",
 		},
 		Server: Server{
-			Addr: "0.0.0.0:8089",
+			Addr: "localhost:8089",
 		},
 		Schema_URI: "http://localhost:8081",
 	}

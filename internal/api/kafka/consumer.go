@@ -50,25 +50,20 @@ func (c *Consumer) ListenAndConsume() error {
 	}
 
 	for _, partition := range partitions.Topics[c.cfgKafka.Topic].Partitions {
-		go func() {
-			if err := c.consumePartitionMessages(partition.ID); err != nil {
+		go func(partitionID int32) {
+			if err := c.consumePartitionMessages(partitionID); err != nil {
 				log.Printf("consume partition messages: %v", err)
 			}
-		}()
-
+		}(partition.ID)
 	}
 
 	return nil
 }
 
 func (c *Consumer) consumePartitionMessages(partition int32) error {
-	err := c.client.Assign(
-		[]kafka.TopicPartition{{
-			Topic:     &c.cfgKafka.Topic,
-			Partition: partition,
-		}})
+	err := c.client.Subscribe(c.cfgKafka.Topic, nil)
 	if err != nil {
-		return fmt.Errorf("assign partition: %w", err)
+		return fmt.Errorf("subscribe to topic: %w", err)
 	}
 
 	deser, err := jsonschema.NewDeserializer(
@@ -115,7 +110,7 @@ func (c *Consumer) handleMessage(msg *kafka.Message, deser *jsonschema.Deseriali
 		return fmt.Errorf("failed to save order: %w", err)
 	}
 
-	log.Printf("Received and saved message from partition %d: %+v\n", partition, order)
+	log.Printf("Received and saved message from partition %d with order_uid=%v", partition, order.OrderUID)
 
 	return nil
 }

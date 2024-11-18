@@ -11,7 +11,7 @@ import (
 )
 
 type GetProvider interface {
-	GetOrder(ctx context.Context, order_uid model.OrderUID) (model.Order, error)
+	GetOrder(ctx context.Context, orderUID model.OrderUID) (model.Order, error)
 }
 
 func HandleGetOrder(orderService GetProvider) http.HandlerFunc {

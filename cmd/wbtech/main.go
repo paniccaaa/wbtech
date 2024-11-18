@@ -38,7 +38,7 @@ func main() {
 		}
 	}()
 
-	log.Println("Server started")
+	log.Printf("Server started at %s", cfg.Server.Addr)
 
 	schemaClient, err := schemaregistry.NewClient(schemaregistry.NewConfig(cfg.Schema_URI))
 	if err != nil {
@@ -63,6 +63,7 @@ func main() {
 	log.Println("Producer has finished sending messages to Kafka.")
 
 	go func() {
+		// start consumer
 		if err := consumer.ListenAndConsume(); err != nil {
 			log.Printf("Consumer error: %v", err)
 		} else {

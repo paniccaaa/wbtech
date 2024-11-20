@@ -6,6 +6,7 @@ import (
 	"github.com/paniccaaa/wbtech/internal/model"
 )
 
+//go:generate mockery --name Storage
 type Storage interface {
 	GetOrder(ctx context.Context, orderUID model.OrderUID) (model.Order, error)
 	SaveOrder(ctx context.Context, order model.Order) error

@@ -2,7 +2,7 @@
 
 
 ## TODO:
-- instruction to start (in memory)
+- instruction to start
 - Dockerfile (compose)
 - slog
 - test && mocks(with //go:generate on interface) check mockery

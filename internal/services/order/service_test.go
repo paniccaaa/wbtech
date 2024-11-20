@@ -2,201 +2,128 @@ package order
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"github.com/paniccaaa/wbtech/internal/model"
-	mock_order "github.com/paniccaaa/wbtech/internal/services/order/mock"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/mock/gomock"
+	"github.com/paniccaaa/wbtech/internal/services/order/mocks"
 )
 
-type serviceTestDeps struct {
-	Service *Service
-	ctx     context.Context
-	storage *mock_order.MockStorage
-}
-
-func getTestDeps(t *testing.T) *serviceTestDeps {
-	ctrl := gomock.NewController(t)
-	storage := mock_order.NewMockStorage(ctrl)
-
-	return &serviceTestDeps{
-		Service: &Service{
-			ordersRepository: storage,
-		},
-		ctx:     context.Background(),
-		storage: storage,
-	}
-}
-
 func TestService_GetOrder(t *testing.T) {
-	t.Parallel()
-
 	type args struct {
+		ctx      context.Context
 		orderUID model.OrderUID
 	}
-
-	type result struct {
-		order model.Order
-		err   error
-	}
-
-	type testCase struct {
-		name   string
-		args   args
-		mocks  func(tc testCase, deps *serviceTestDeps)
-		result result
-	}
-
-	testCases := []testCase{
+	tests := []struct {
+		name       string
+		args       args
+		mockReturn struct {
+			order model.Order
+			err   error
+		}
+		want    model.Order
+		wantErr bool
+	}{
 		{
-			name: "success",
-			mocks: func(tc testCase, deps *serviceTestDeps) {
-				deps.storage.EXPECT().
-					GetOrder(gomock.Any(), tc.args.orderUID).
-					Return(model.Order{OrderUID: tc.args.orderUID}, nil)
-			},
+			name: "successful get",
 			args: args{
-				orderUID: model.OrderUID("b563feb7b2b84b6test13"),
+				ctx:      context.Background(),
+				orderUID: "b563feb7b2b84b6test",
 			},
-			result: result{
-				order: model.Order{OrderUID: "b563feb7b2b84b6test13"},
-				err:   nil,
+			mockReturn: struct {
+				order model.Order
+				err   error
+			}{
+				order: model.Order{
+					OrderUID: "b563feb7b2b84b6test",
+				},
+				err: nil,
 			},
+			want: model.Order{
+				OrderUID: "b563feb7b2b84b6test",
+			},
+			wantErr: false,
 		},
 		{
 			name: "order not found",
-			mocks: func(tc testCase, deps *serviceTestDeps) {
-				deps.storage.EXPECT().
-					GetOrder(gomock.Any(), tc.args.orderUID).
-					Return(model.Order{}, model.ErrOrderNotFound)
-			},
 			args: args{
-				orderUID: model.OrderUID("456"),
+				ctx:      context.Background(),
+				orderUID: "non-existent order uid",
 			},
-			result: result{
+			mockReturn: struct {
+				order model.Order
+				err   error
+			}{
 				order: model.Order{},
 				err:   model.ErrOrderNotFound,
 			},
+			want:    model.Order{},
+			wantErr: true,
 		},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			storage := mocks.NewStorage(t)
 
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+			storage.
+				On("GetOrder", tt.args.ctx, tt.args.orderUID).
+				Return(tt.mockReturn.order, tt.mockReturn.err).
+				Once()
 
-			deps := getTestDeps(t)
+			s := &Service{
+				ordersRepository: storage,
+			}
 
-			tc.mocks(tc, deps)
-
-			order, err := deps.Service.GetOrder(deps.ctx, tc.args.orderUID)
-			require.ErrorIs(t, err, tc.result.err)
-			require.Equal(t, tc.result.order, order)
+			got, err := s.GetOrder(tt.args.ctx, tt.args.orderUID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Service.GetOrder() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Service.GetOrder() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
 
 func TestService_SaveOrder(t *testing.T) {
-	t.Parallel()
-
 	type args struct {
+		ctx   context.Context
 		order model.Order
 	}
-
-	type result struct {
-		err error
-	}
-
-	type testCase struct {
-		name   string
-		args   args
-		mocks  func(tc testCase, deps *serviceTestDeps)
-		result result
-	}
-
-	testCases := []testCase{
+	tests := []struct {
+		name    string
+		args    args
+		want    error
+		wantErr bool
+	}{
 		{
-			name: "success",
-			mocks: func(tc testCase, deps *serviceTestDeps) {
-				deps.storage.EXPECT().
-					SaveOrder(gomock.Any(), tc.args.order).
-					Return(nil)
-			},
+			name: "successful save",
 			args: args{
+				ctx: context.Background(),
 				order: model.Order{
-					OrderUID:    "123",
-					TrackNumber: "TN123",
-					CustomerID:  "customer1",
-					Delivery: model.Delivery{
-						Name:    "John Doe",
-						Phone:   "1234567890",
-						Zip:     "12345",
-						City:    "City",
-						Address: "123 St.",
-						Region:  "Region",
-						Email:   "johndoe@example.com",
-					},
-					Payment: model.Payment{
-						Transaction:  "txn123",
-						RequestID:    "req123",
-						Currency:     "USD",
-						Provider:     "Provider1",
-						Amount:       1000,
-						PaymentDT:    1616161616,
-						Bank:         "Bank1",
-						DeliveryCost: 50,
-						GoodsTotal:   950,
-						CustomFee:    10,
-					},
-					Items: []model.Item{
-						{
-							ChrtID:      1,
-							TrackNumber: "TN123",
-							Price:       500,
-							Rid:         "RID123",
-							Name:        "Item1",
-							Sale:        10,
-							Size:        "L",
-							TotalPrice:  450,
-							NmID:        1234,
-							Brand:       "Brand1",
-							Status:      1,
-						},
-					},
+					OrderUID: "b563feb7b2b84b6test",
 				},
 			},
-			result: result{
-				err: nil,
-			},
+			want: nil,
 		},
-		// {
-		// 	name: "save order failed",
-		// 	mocks: func(tc testCase, deps *serviceTestDeps) {
-		// 		deps.storage.EXPECT().
-		// 			SaveOrder(gomock.Any(), tc.args.order)
-		// 		// Return(model.ErrDatabase)
-		// 	},
-		// 	args: args{
-		// 		order: model.Order{OrderUID: "123"},
-		// 	},
-		// 	result: result{
-		// 		// err: model.ErrDatabase,
-		// 	},
-		// },
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			storage := mocks.NewStorage(t)
 
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+			storage.
+				On("SaveOrder", tt.args.ctx, tt.args.order).
+				Return().
+				Once()
 
-			deps := getTestDeps(t)
+			s := &Service{
+				ordersRepository: storage,
+			}
 
-			tc.mocks(tc, deps)
-
-			err := deps.Service.SaveOrder(deps.ctx, tc.args.order)
-			require.ErrorIs(t, err, tc.result.err)
+			if err := s.SaveOrder(tt.args.ctx, tt.args.order); (err != nil) != tt.wantErr {
+				t.Errorf("Service.SaveOrder() error = %v, wantErr %v", err, tt.wantErr)
+			}
 		})
 	}
 }

@@ -10,7 +10,6 @@ require (
 require (
 	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.9.0
-	go.uber.org/mock v0.4.0
 )
 
 require (
@@ -18,6 +17,7 @@ require (
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 )
 
 require (

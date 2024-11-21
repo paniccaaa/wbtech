@@ -19,7 +19,7 @@ type Producer struct {
 	cfgKafka     app.Kafka
 }
 
-func NewProducer(cfg app.Config, schemaClient schemaregistry.Client) (*Producer, error) {
+func NewProducer(cfg *app.Config, schemaClient schemaregistry.Client) (*Producer, error) {
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": cfg.Kafka.URI,
 	})

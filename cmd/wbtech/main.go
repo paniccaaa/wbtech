@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -18,7 +19,7 @@ import (
 
 func main() {
 	cfg := app.NewConfig()
-
+	fmt.Println(*cfg)
 	db, err := postgres.NewRepository(cfg.DB_URI)
 	if err != nil {
 		log.Fatalf("failed to init db: %v", err)
@@ -40,7 +41,7 @@ func main() {
 
 	log.Printf("Server started at %s", cfg.Server.Addr)
 
-	schemaClient, err := schemaregistry.NewClient(schemaregistry.NewConfig(cfg.Schema_URI))
+	schemaClient, err := schemaregistry.NewClient(schemaregistry.NewConfig(cfg.Kafka.SchemaURI))
 	if err != nil {
 		log.Fatalf("failed to create schema registry client: %v", err)
 	}

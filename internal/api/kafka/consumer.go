@@ -24,7 +24,7 @@ type Consumer struct {
 	order        SaveProvider
 }
 
-func NewConsumer(cfg app.Config, schemaClient schemaregistry.Client, order SaveProvider) (*Consumer, error) {
+func NewConsumer(cfg *app.Config, schemaClient schemaregistry.Client, order SaveProvider) (*Consumer, error) {
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": cfg.Kafka.URI,
 		"group.id":          "group-id",

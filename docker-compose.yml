@@ -64,6 +64,20 @@ services:
       - "8080:8080"
     networks:
       - wbtech_network
+  app:
+    build:
+      context: . # current dir
+      dockerfile: Dockerfile
+    container_name: wbtech-kafka
+    environment:
+      - CONFIG_PATH=/app/docker.yaml
+    ports:
+      - "8089:8089"
+    networks:
+      - wbtech_network
+    depends_on:
+      - kafka1
+      - schema-registry
 
 networks:
   wbtech_network:

@@ -1,0 +1,9 @@
+db_uri: "postgres://wbuser:wbpassword@localhost:5435/postgres?sslmode=disable"
+
+kafka:
+  uri: "localhost:9092"
+  topic: "orders"
+  schema_uri: "http://localhost:8081"
+
+srv:
+  addr: "localhost:8089"

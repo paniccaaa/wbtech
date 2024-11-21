@@ -6,7 +6,7 @@
 - Dockerfile (compose)
 - slog
 - test && mocks(with //go:generate on interface) check mockery
-- config (yaml)
+- config (yaml) - DONE
 - clear cache (control memory)
 - html template
-- github actions
+- github actions - DONE

@@ -1,31 +1,44 @@
 package app
 
+import (
+	"log"
+	"os"
+
+	"github.com/ilyakaznacheev/cleanenv"
+)
+
+// const configPath = "./config/dev.yaml"
+
 type Config struct {
-	DB_URI     string `env:"DB_URI"`
-	Kafka      Kafka  `env:"KAFKA"`
-	Server     Server `env:"SERVER"`
-	Schema_URI string `env:"SCHEMA_URI"`
+	DB_URI string `yaml:"db_uri"`
+	Kafka  Kafka  `yaml:"kafka"`
+	Server Server `yaml:"srv"`
 }
 
 type Kafka struct {
-	URI   string `env:"URI"`
-	Topic string `env:"TOPIC"`
+	URI       string `yaml:"uri"`
+	Topic     string `yaml:"topic"`
+	SchemaURI string `yaml:"schema_uri"`
 }
 
 type Server struct {
-	Addr string `env:"ADDR"`
+	Addr string `yaml:"addr"`
 }
 
-func NewConfig() Config {
-	return Config{
-		DB_URI: "postgres://wbuser:wbpassword@localhost:5435/postgres?sslmode=disable",
-		Kafka: Kafka{
-			URI:   "localhost:9092",
-			Topic: "orders",
-		},
-		Server: Server{
-			Addr: "localhost:8089",
-		},
-		Schema_URI: "http://localhost:8081",
+func NewConfig() *Config {
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		log.Fatal("config path is required")
 	}
+
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		log.Fatalf("config file does not exists: %s", configPath)
+	}
+
+	var cfg Config
+	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
+		log.Fatalf("failed to read config: %v", err)
+	}
+
+	return &cfg
 }

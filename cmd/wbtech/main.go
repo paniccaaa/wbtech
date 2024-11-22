@@ -2,8 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,15 +17,17 @@ import (
 )
 
 func main() {
+	log := app.SetupLogger()
 	cfg := app.NewConfig()
-	fmt.Println(*cfg)
-	db, err := postgres.NewRepository(cfg.DB_URI)
+
+	db, err := postgres.NewRepository(cfg.DB_URI, log)
 	if err != nil {
-		log.Fatalf("failed to init db: %v", err)
+		log.Error("failed to init db", slog.String("err", err.Error()))
+		os.Exit(1)
 	}
 
 	orderService := order.NewService(db)
-	router := app.InitRouter(orderService)
+	router := app.InitRouter(orderService, log)
 
 	srv := &http.Server{
 		Addr:    cfg.Server.Addr,
@@ -35,40 +36,42 @@ func main() {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
-			log.Printf("failed to start server: %v", err)
+			log.Error("failed to start server", slog.String("err", err.Error()))
 		}
 	}()
 
-	log.Printf("Server started at %s", cfg.Server.Addr)
+	log.Info("server started", slog.String("addr", cfg.Server.Addr))
 
 	schemaClient, err := schemaregistry.NewClient(schemaregistry.NewConfig(cfg.Kafka.SchemaURI))
 	if err != nil {
-		log.Fatalf("failed to create schema registry client: %v", err)
+		log.Error("failed to create schema registry client", slog.String("err", err.Error()))
 	}
 
 	producer, err := kafka.NewProducer(cfg, schemaClient)
 	if err != nil {
-		log.Fatalf("failed to create producer: %v", err)
+		log.Error("failed to create producer", slog.String("err", err.Error()))
 	}
 	defer producer.Close()
 
 	consumer, err := kafka.NewConsumer(cfg, schemaClient, orderService)
 	if err != nil {
-		log.Fatalf("failed to create consumer: %v", err)
+		log.Error("failed to create consumer", slog.String("err", err.Error()))
+		os.Exit(1)
 	}
 
 	if err := producer.StartProduce(); err != nil {
-		log.Fatalf("failed to produce messages: %v", err)
+		log.Error("failed to produce message", slog.String("err", err.Error()))
+		os.Exit(1)
 	}
 
-	log.Println("Producer has finished sending messages to Kafka.")
+	log.Info("Producer has finished sending messages to Kafka")
 
 	go func() {
 		// start consumer
 		if err := consumer.ListenAndConsume(); err != nil {
-			log.Printf("Consumer error: %v", err)
+			log.Error("listen and consume", slog.String("err", err.Error()))
 		} else {
-			log.Println("Consumer has finished consuming messages.")
+			log.Info("Consumer has finished consuming messages")
 		}
 	}()
 
@@ -77,14 +80,14 @@ func main() {
 
 	<-done
 
-	log.Println("Shutting down server")
+	log.Info("stopping server")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("failed to stop server: %v", err)
+		log.Error("failed to stop server", slog.String("err", err.Error()))
 	}
 
-	log.Println("Server gracefully stopped.")
+	log.Info("Server stopped.")
 }

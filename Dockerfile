@@ -18,6 +18,7 @@ WORKDIR /app
 
 COPY --from=builder /build/bin/app /app/app
 COPY ./config/docker.yaml /app/docker.yaml  
+COPY ./orders.json /app/orders.json
 
 EXPOSE 8089
-CMD ["ls", "/app/app"]
+CMD ["/app/app"]

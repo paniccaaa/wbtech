@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"sync"
 
 	sq "github.com/Masterminds/squirrel"
@@ -52,16 +52,19 @@ func (c *Cache) Restore(orders []model.Order) {
 type Repository struct {
 	db    *sqlx.DB
 	cache *Cache
+	log   *slog.Logger
 }
 
-func NewRepository(DB_URI string) (order.Storage, error) {
+func NewRepository(DB_URI string, log *slog.Logger) (order.Storage, error) {
 	db, err := sqlx.Connect("postgres", DB_URI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to db: %v", err)
 	}
 
+	log.Info("connected to db", slog.String("DB_URI", DB_URI))
+
 	cache := NewCache()
-	repo := &Repository{db: db, cache: cache}
+	repo := &Repository{db: db, cache: cache, log: log}
 
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to verify connection to db: %v", err)
@@ -70,6 +73,8 @@ func NewRepository(DB_URI string) (order.Storage, error) {
 	if err := repo.restoreCacheFromDB(); err != nil {
 		return nil, fmt.Errorf("restore cache: %w", err)
 	}
+
+	log.Info("successfully restore cache")
 
 	return repo, nil
 }
@@ -104,9 +109,11 @@ func (r *Repository) restoreCacheFromDB() error {
 
 func (r *Repository) GetOrder(ctx context.Context, orderUID model.OrderUID) (model.Order, error) {
 	if order, found := r.cache.Get(orderUID); found {
-		log.Printf("get from cache: %s", orderUID)
+		r.log.Info("get from cache", slog.String("orderUID", string(orderUID)))
 		return order, nil
 	}
+
+	r.log.Info("order not found", slog.String("orderUID", string(orderUID)))
 
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	query := psql.
@@ -124,6 +131,9 @@ func (r *Repository) GetOrder(ctx context.Context, orderUID model.OrderUID) (mod
 		if errors.Is(err, sql.ErrNoRows) {
 			return model.Order{}, model.ErrOrderNotFound
 		}
+
+		r.log.Error("failed to get order", slog.String("err", err.Error()))
+
 		return model.Order{}, fmt.Errorf("get order: %w", err)
 	}
 

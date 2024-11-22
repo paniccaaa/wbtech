@@ -1,4 +1,4 @@
-db_uri: "postgres://wbuser:wbpassword@postgres:5432/wbdatabase?sslmode=disable"
+db_uri: "postgres://wbuser:wbpassword@postgres:5432/postgres?sslmode=disable"
 
 kafka:
   uri: "kafka1:29092"

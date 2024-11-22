@@ -64,6 +64,7 @@ services:
       - "8080:8080"
     networks:
       - wbtech_network
+  
   app:
     build:
       context: . # current dir

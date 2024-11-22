@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"sync"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
@@ -15,39 +15,6 @@ import (
 	"github.com/paniccaaa/wbtech/internal/model"
 	"github.com/paniccaaa/wbtech/internal/services/order"
 )
-
-type Cache struct {
-	mu    sync.RWMutex
-	cache map[model.OrderUID]model.Order
-}
-
-func NewCache() *Cache {
-	return &Cache{
-		cache: make(map[model.OrderUID]model.Order),
-	}
-}
-
-func (c *Cache) Get(orderUID model.OrderUID) (model.Order, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	order, ok := c.cache[orderUID]
-	return order, ok
-}
-
-func (c *Cache) Set(order model.Order) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.cache[order.OrderUID] = order
-}
-
-func (c *Cache) Restore(orders []model.Order) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	for _, order := range orders {
-		c.cache[order.OrderUID] = order
-	}
-
-}
 
 type Repository struct {
 	db    *sqlx.DB
@@ -63,7 +30,8 @@ func NewRepository(DB_URI string, log *slog.Logger) (order.Storage, error) {
 
 	log.Info("connected to db", slog.String("DB_URI", DB_URI))
 
-	cache := NewCache()
+	// mayber other params
+	cache := newCache(10*time.Second, 2*time.Second)
 	repo := &Repository{db: db, cache: cache, log: log}
 
 	if err := db.Ping(); err != nil {
@@ -74,7 +42,7 @@ func NewRepository(DB_URI string, log *slog.Logger) (order.Storage, error) {
 		return nil, fmt.Errorf("restore cache: %w", err)
 	}
 
-	log.Info("successfully restore cache")
+	log.Info("successfully restored cache")
 
 	return repo, nil
 }
@@ -112,8 +80,6 @@ func (r *Repository) GetOrder(ctx context.Context, orderUID model.OrderUID) (mod
 		r.log.Info("get from cache", slog.String("orderUID", string(orderUID)))
 		return order, nil
 	}
-
-	r.log.Info("order not found", slog.String("orderUID", string(orderUID)))
 
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	query := psql.

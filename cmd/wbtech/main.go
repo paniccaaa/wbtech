@@ -26,7 +26,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	orderService := order.NewService(db)
+	schemaClient, err := schemaregistry.NewClient(schemaregistry.NewConfig(cfg.Kafka.SchemaURI))
+	if err != nil {
+		log.Error("failed to create schema registry client", slog.String("err", err.Error()))
+	}
+
+	orderService, err := order.NewService(db, schemaClient)
+	if err != nil {
+		log.Error("failed to create order service", slog.String("err", err.Error()))
+		os.Exit(1)
+	}
+
 	router := app.InitRouter(orderService, log)
 
 	srv := &http.Server{
@@ -42,34 +52,29 @@ func main() {
 
 	log.Info("server started", slog.String("addr", cfg.Server.Addr))
 
-	schemaClient, err := schemaregistry.NewClient(schemaregistry.NewConfig(cfg.Kafka.SchemaURI))
-	if err != nil {
-		log.Error("failed to create schema registry client", slog.String("err", err.Error()))
-	}
-
 	producer, err := kafka.NewProducer(cfg, schemaClient)
 	if err != nil {
 		log.Error("failed to create producer", slog.String("err", err.Error()))
 	}
 	defer producer.Close()
 
-	consumer, err := kafka.NewConsumer(cfg, schemaClient, orderService)
-	if err != nil {
-		log.Error("failed to create consumer", slog.String("err", err.Error()))
-		os.Exit(1)
-	}
-
 	if err := producer.StartProduce(); err != nil {
 		log.Error("failed to produce message", slog.String("err", err.Error()))
 		os.Exit(1)
 	}
 
-	log.Info("Producer has finished sending messages to Kafka")
+	consumer, err := kafka.NewConsumer(cfg, schemaClient, orderService, log)
+	if err != nil {
+		log.Error("failed to create consumer", slog.String("err", err.Error()))
+		os.Exit(1)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	go func() {
-		// start consumer
-		if err := consumer.ListenAndConsume(); err != nil {
-			log.Error("listen and consume", slog.String("err", err.Error()))
+		if err := consumer.Consume(ctx); err != nil {
+			log.Error("consumer stopped with error", slog.String("err", err.Error()))
 		} else {
 			log.Info("Consumer has finished consuming messages")
 		}
@@ -82,7 +87,7 @@ func main() {
 
 	log.Info("stopping server")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {

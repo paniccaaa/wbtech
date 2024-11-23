@@ -3,6 +3,7 @@ package kafka
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -61,6 +62,9 @@ func (p *Producer) StartProduce() error {
 	}
 
 	p.client.Flush(3 * 1000)
+
+	log.Println("Producer has finished sending messages to Kafka")
+
 	return nil
 }
 

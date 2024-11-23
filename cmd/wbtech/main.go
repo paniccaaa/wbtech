@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry"
+	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry/serde"
+	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry/serde/jsonschema"
 	"github.com/paniccaaa/wbtech/internal/api/kafka"
 	"github.com/paniccaaa/wbtech/internal/app"
 	"github.com/paniccaaa/wbtech/internal/repository/postgres"
@@ -31,7 +33,17 @@ func main() {
 		log.Error("failed to create schema registry client", slog.String("err", err.Error()))
 	}
 
-	orderService, err := order.NewService(db, schemaClient)
+	deser, err := jsonschema.NewDeserializer(
+		schemaClient,
+		serde.ValueSerde,
+		jsonschema.NewDeserializerConfig(),
+	)
+	if err != nil {
+		log.Error("failed to create deserializer", slog.String("err", err.Error()))
+		os.Exit(1)
+	}
+
+	orderService, err := order.NewService(db, deser)
 	if err != nil {
 		log.Error("failed to create order service", slog.String("err", err.Error()))
 		os.Exit(1)

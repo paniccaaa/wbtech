@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry"
-	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry/serde"
-	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry/serde/jsonschema"
 	"github.com/paniccaaa/wbtech/internal/model"
 )
 
@@ -17,26 +14,20 @@ type Storage interface {
 	SaveOrder(ctx context.Context, order model.Order) error
 }
 
-type Service struct {
-	ordersRepository Storage
-	deser            *jsonschema.Deserializer
-	schemaClient     schemaregistry.Client
+//go:generate mockery --name Deserializer
+type Deserializer interface {
+	DeserializeInto(topic string, message []byte, v interface{}) error
 }
 
-func NewService(ordersRepo Storage, schemaClient schemaregistry.Client) (*Service, error) {
-	deser, err := jsonschema.NewDeserializer(
-		schemaClient,
-		serde.ValueSerde,
-		jsonschema.NewDeserializerConfig(),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("create deserializer: %w", err)
-	}
+type Service struct {
+	ordersRepository Storage
+	deser            Deserializer
+}
 
+func NewService(ordersRepo Storage, deser Deserializer) (*Service, error) {
 	return &Service{
 		ordersRepository: ordersRepo,
 		deser:            deser,
-		schemaClient:     schemaClient,
 	}, nil
 }
 

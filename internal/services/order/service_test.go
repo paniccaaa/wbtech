@@ -86,44 +86,32 @@ func TestService_GetOrder(t *testing.T) {
 	}
 }
 
-// func TestService_SaveOrder(t *testing.T) {
-// 	type args struct {
-// 		ctx   context.Context
-// 		order model.Order
-// 	}
-// 	tests := []struct {
-// 		name    string
-// 		args    args
-// 		want    error
-// 		wantErr bool
-// 	}{
-// 		{
-// 			name: "successful save",
-// 			args: args{
-// 				ctx: context.Background(),
-// 				order: model.Order{
-// 					OrderUID: "b563feb7b2b84b6test",
-// 				},
-// 			},
-// 			want: nil,
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			storage := mocks.NewStorage(t)
+func TestService_ProcessKafkaMessage(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		topic   string
+		message []byte
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			storage := mocks.NewStorage(t)
+			deser := mocks.NewDeserializer(t)
 
-// 			storage.
-// 				On("SaveOrder", tt.args.ctx, tt.args.order).
-// 				Return().
-// 				Once()
+			s := &Service{
+				ordersRepository: storage,
+				deser:            deser,
+			}
 
-// 			s := &Service{
-// 				ordersRepository: storage,
-// 			}
-
-// 			if err := s.SaveOrder(tt.args.ctx, tt.args.order); (err != nil) != tt.wantErr {
-// 				t.Errorf("Service.SaveOrder() error = %v, wantErr %v", err, tt.wantErr)
-// 			}
-// 		})
-// 	}
-// }
+			if err := s.ProcessKafkaMessage(tt.args.ctx, tt.args.topic, tt.args.message); (err != nil) != tt.wantErr {
+				t.Errorf("Service.ProcessKafkaMessage() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

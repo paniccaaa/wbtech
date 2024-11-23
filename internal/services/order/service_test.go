@@ -92,17 +92,44 @@ func TestService_ProcessKafkaMessage(t *testing.T) {
 		topic   string
 		message []byte
 	}
+	type mockReturn struct {
+		order model.Order
+		err   error
+	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name       string
+		args       args
+		mockReturn mockReturn
+		wantErr    bool
 	}{
 		// TODO: Add test cases.
+		{
+			name: "successful process",
+			args: args{
+				ctx:     context.Background(),
+				topic:   "orders",
+				message: []byte(`{"OrderUID": "b563feb7b2b84b6test"}`),
+			},
+			mockReturn: mockReturn{
+				err: nil,
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			storage := mocks.NewStorage(t)
 			deser := mocks.NewDeserializer(t)
+
+			deser.
+				On("DeserializeInto", tt.args.topic, tt.args.message, &model.Order{}).
+				Return(tt.mockReturn.err).
+				Once()
+
+			storage.
+				On("SaveOrder", tt.args.ctx, tt.mockReturn.order).
+				Return(tt.mockReturn.err).
+				Once()
 
 			s := &Service{
 				ordersRepository: storage,

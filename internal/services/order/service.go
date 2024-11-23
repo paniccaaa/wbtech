@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 
 	"github.com/paniccaaa/wbtech/internal/model"
 )
@@ -22,12 +23,14 @@ type Deserializer interface {
 type Service struct {
 	ordersRepository Storage
 	deser            Deserializer
+	log              *slog.Logger
 }
 
-func NewService(ordersRepo Storage, deser Deserializer) (*Service, error) {
+func NewService(ordersRepo Storage, deser Deserializer, log *slog.Logger) (*Service, error) {
 	return &Service{
 		ordersRepository: ordersRepo,
 		deser:            deser,
+		log:              log,
 	}, nil
 }
 

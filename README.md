@@ -19,9 +19,9 @@ make goose-up
 ## TODO:
 - instruction to start 
 - Dockerfile (compose) - DONE
-- slog
+- slog 
 - test && mocks
 - config (yaml) - DONE
-- clear cache (control memory)
+- clear cache (control memory) - DONE
 - html template
 - github actions - DONE

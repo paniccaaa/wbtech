@@ -44,7 +44,7 @@ func HandleGetOrder(orderService GetProvider, log *slog.Logger) http.HandlerFunc
 
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(order); err != nil {
-			log.Error("failed to encode order", slog.String("orderUID", orderUID))
+			log.Error("failed to encode order", slog.String("orderUID", orderUID), slog.String("err", err.Error()))
 
 			http.Error(w, "failed to encode order", http.StatusInternalServerError)
 			return

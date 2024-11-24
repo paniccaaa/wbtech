@@ -31,11 +31,9 @@ func newCache(ttl, cleanupTick time.Duration) *Cache {
 
 func (c *Cache) startCleanup() {
 	ticker := time.NewTicker(c.cleanupTick)
-	for {
-		select {
-		case <-ticker.C:
-			c.cleanup()
-		}
+	defer ticker.Stop()
+	for range ticker.C {
+		c.cleanup()
 	}
 }
 

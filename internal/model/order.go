@@ -1,6 +1,13 @@
 package model
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
+
+var (
+	ErrOrderNotFound = fmt.Errorf("order not found: %w", ErrNotFound)
+)
 
 type OrderUID string
 

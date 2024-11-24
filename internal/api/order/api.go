@@ -11,6 +11,7 @@ import (
 	"github.com/paniccaaa/wbtech/internal/model"
 )
 
+//go:generate mockery --name GetProvider
 type GetProvider interface {
 	GetOrder(ctx context.Context, orderUID model.OrderUID) (model.Order, error)
 }

@@ -102,7 +102,6 @@ func TestService_ProcessKafkaMessage(t *testing.T) {
 		mockReturn mockReturn
 		wantErr    bool
 	}{
-		// TODO: Add test cases.
 		{
 			name: "successful process",
 			args: args{

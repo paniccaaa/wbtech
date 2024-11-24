@@ -66,7 +66,6 @@ func HandleGetOrder(orderService GetProvider, log *slog.Logger) http.HandlerFunc
 			</html>
 		`
 
-		// Создаем шаблон
 		tmpl, err := template.New("order").Parse(orderTemplate)
 		if err != nil {
 			log.Error("failed to parse template", slog.String("err", err.Error()))
@@ -78,13 +77,5 @@ func HandleGetOrder(orderService GetProvider, log *slog.Logger) http.HandlerFunc
 			log.Error("failed to render template", slog.String("err", err.Error()))
 			http.Error(w, fmt.Sprintf("failed to render template: %v", err), http.StatusInternalServerError)
 		}
-
-		// w.Header().Set("Content-Type", "application/json")
-		// if err := json.NewEncoder(w).Encode(order); err != nil {
-		// 	log.Error("failed to encode order", slog.String("orderUID", orderUID), slog.String("err", err.Error()))
-
-		// 	http.Error(w, "failed to encode order", http.StatusInternalServerError)
-		// 	return
-		// }
 	}
 }

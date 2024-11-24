@@ -25,12 +25,12 @@ type Service struct {
 	log              *slog.Logger
 }
 
-func NewService(ordersRepo Storage, deser Deserializer, log *slog.Logger) (*Service, error) {
+func NewService(ordersRepo Storage, deser Deserializer, log *slog.Logger) *Service {
 	return &Service{
 		ordersRepository: ordersRepo,
 		deser:            deser,
 		log:              log,
-	}, nil
+	}
 }
 
 func (s *Service) GetOrder(ctx context.Context, orderUID model.OrderUID) (model.Order, error) {

@@ -13,7 +13,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/paniccaaa/wbtech/internal/model"
-	"github.com/paniccaaa/wbtech/internal/services/order"
 )
 
 type Repository struct {
@@ -22,7 +21,7 @@ type Repository struct {
 	log   *slog.Logger
 }
 
-func NewRepository(DB_URI string, log *slog.Logger) (order.Storage, error) {
+func NewRepository(DB_URI string, log *slog.Logger) (*Repository, error) {
 	db, err := sqlx.Connect("postgres", DB_URI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to db: %v", err)
@@ -30,7 +29,7 @@ func NewRepository(DB_URI string, log *slog.Logger) (order.Storage, error) {
 
 	log.Info("connected to db", slog.String("DB_URI", DB_URI))
 
-	// mayber other params
+	// maybe other params
 	cache := newCache(10*time.Second, 2*time.Second)
 	repo := &Repository{db: db, cache: cache, log: log}
 

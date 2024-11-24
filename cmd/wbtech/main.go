@@ -3,19 +3,12 @@ package main
 import (
 	"context"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
-	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry"
-	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry/serde"
-	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry/serde/jsonschema"
 	api "github.com/paniccaaa/wbtech/internal/api/kafka"
 	"github.com/paniccaaa/wbtech/internal/app"
-	"github.com/paniccaaa/wbtech/internal/repository/postgres"
 	"github.com/paniccaaa/wbtech/internal/services/order"
 )
 
@@ -23,45 +16,13 @@ func main() {
 	log := app.SetupLogger()
 	cfg := app.NewConfig()
 
-	db, err := postgres.NewRepository(cfg.DB_URI, log)
-	if err != nil {
-		log.Error("failed to init db", slog.String("err", err.Error()))
-		os.Exit(1)
-	}
+	db := app.SetupDB(cfg.DB_URI, log)
 
-	schemaClient, err := schemaregistry.NewClient(schemaregistry.NewConfig(cfg.Kafka.SchemaURI))
-	if err != nil {
-		log.Error("failed to create schema registry client", slog.String("err", err.Error()))
-	}
+	deser, schemaClient := app.SetupDeserializer(cfg, log)
+	orderService := order.NewService(db, deser, log)
 
-	deser, err := jsonschema.NewDeserializer(
-		schemaClient,
-		serde.ValueSerde,
-		jsonschema.NewDeserializerConfig(),
-	)
-	if err != nil {
-		log.Error("failed to create deserializer", slog.String("err", err.Error()))
-		os.Exit(1)
-	}
-
-	orderService, err := order.NewService(db, deser, log)
-	if err != nil {
-		log.Error("failed to create order service", slog.String("err", err.Error()))
-		os.Exit(1)
-	}
-
-	router := app.InitRouter(orderService, log)
-
-	srv := &http.Server{
-		Addr:    cfg.Server.Addr,
-		Handler: router,
-	}
-
-	go func() {
-		if err := srv.ListenAndServe(); err != nil {
-			log.Error("failed to start server", slog.String("err", err.Error()))
-		}
-	}()
+	srv := app.SetupServer(cfg, orderService, log)
+	app.StartServer(srv, log)
 
 	log.Info("server started", slog.String("addr", cfg.Server.Addr))
 
@@ -76,21 +37,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": cfg.Kafka.URI,
-		"group.id":          "group-id",
-		"auto.offset.reset": "earliest",
-		"security.protocol": "PLAINTEXT",
-	})
-	if err != nil {
-		log.Error("create consumer", slog.String("err", err.Error()))
-		os.Exit(1)
-	}
-
-	if err := c.Subscribe(cfg.Kafka.Topic, nil); err != nil {
-		log.Error("subscribe to topic", slog.String("err", err.Error()))
-	}
-
+	c := app.SetupConsumer(cfg, log)
 	consumer := api.NewConsumer(cfg, c, orderService, log)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -107,14 +54,5 @@ func main() {
 
 	<-done
 
-	log.Info("stopping server")
-
-	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Error("failed to stop server", slog.String("err", err.Error()))
-	}
-
-	log.Info("Server stopped.")
+	app.ShutdownServer(srv, log)
 }

@@ -8,10 +8,12 @@ import (
 	"github.com/paniccaaa/wbtech/internal/app"
 )
 
+//go:generate mockery --name MessageHandler
 type MessageHandler interface {
 	ProcessKafkaMessage(ctx context.Context, topic string, message []byte) error
 }
 
+//go:generate mockery --name Poller
 type Poller interface {
 	Poll(timeoutMs int) (event kafka.Event)
 }
@@ -23,25 +25,29 @@ type Consumer struct {
 	log      *slog.Logger
 }
 
-func NewConsumer(cfg *app.Config, client Poller, handler MessageHandler, log *slog.Logger) (*Consumer, error) {
-
+func NewConsumer(cfg *app.Config, client Poller, handler MessageHandler, log *slog.Logger) *Consumer {
 	return &Consumer{
 		client:   client,
 		cfgKafka: cfg.Kafka,
 		handler:  handler,
 		log:      log,
-	}, nil
+	}
 }
 
 func (c *Consumer) Consume(ctx context.Context) error {
 	for {
-		ev := c.client.Poll(100)
-		if ev == nil {
-			continue
-		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			ev := c.client.Poll(100)
+			if ev == nil {
+				continue
+			}
 
-		if err := c.processEvent(ctx, ev); err != nil {
-			c.log.Error("process event", slog.String("err", err.Error()))
+			if err := c.processEvent(ctx, ev); err != nil {
+				c.log.Error("process event", slog.String("err", err.Error()))
+			}
 		}
 	}
 }

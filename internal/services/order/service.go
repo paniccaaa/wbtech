@@ -3,7 +3,6 @@ package order
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 
 	"github.com/paniccaaa/wbtech/internal/model"
@@ -48,7 +47,7 @@ func (s *Service) ProcessKafkaMessage(ctx context.Context, topic string, message
 		return fmt.Errorf("save order: %w", err)
 	}
 
-	log.Printf("Successfully processed and saved order: %v", order.OrderUID)
+	s.log.Info("Successfully processed and saved order", slog.String("order_uid", string(order.OrderUID)))
 
 	return nil
 }

@@ -2,6 +2,7 @@ package order
 
 import (
 	"context"
+	"log/slog"
 	"reflect"
 	"testing"
 
@@ -119,7 +120,7 @@ func TestService_ProcessKafkaMessage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			storage := mocks.NewStorage(t)
 			deser := mocks.NewDeserializer(t)
-
+			logger := slog.Default()
 			deser.
 				On("DeserializeInto", tt.args.topic, tt.args.message, &model.Order{}).
 				Return(tt.mockReturn.err).
@@ -133,6 +134,7 @@ func TestService_ProcessKafkaMessage(t *testing.T) {
 			s := &Service{
 				ordersRepository: storage,
 				deser:            deser,
+				log:              logger,
 			}
 
 			if err := s.ProcessKafkaMessage(tt.args.ctx, tt.args.topic, tt.args.message); (err != nil) != tt.wantErr {

@@ -44,7 +44,7 @@ func TestCache_startCleanup(t *testing.T) {
 
 	t.Run("Start cleanup and verify expired orders are removed", func(t *testing.T) {
 		go cache.startCleanup()
-		time.Sleep(600 * time.Millisecond) // Wait for cleanup to run
+		time.Sleep(600 * time.Millisecond)
 		_, ok := cache.Get(order.OrderUID)
 		if ok {
 			t.Errorf("Cache.startCleanup() did not remove expired order")

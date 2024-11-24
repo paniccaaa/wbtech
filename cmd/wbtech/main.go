@@ -84,17 +84,14 @@ func main() {
 	})
 	if err != nil {
 		log.Error("create consumer", slog.String("err", err.Error()))
+		os.Exit(1)
 	}
 
 	if err := c.Subscribe(cfg.Kafka.Topic, nil); err != nil {
 		log.Error("subscribe to topic", slog.String("err", err.Error()))
 	}
 
-	consumer, err := api.NewConsumer(cfg, c, orderService, log)
-	if err != nil {
-		log.Error("failed to create consumer", slog.String("err", err.Error()))
-		os.Exit(1)
-	}
+	consumer := api.NewConsumer(cfg, c, orderService, log)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -102,8 +99,6 @@ func main() {
 	go func() {
 		if err := consumer.Consume(ctx); err != nil {
 			log.Error("consumer stopped with error", slog.String("err", err.Error()))
-		} else {
-			log.Info("Consumer has finished consuming messages")
 		}
 	}()
 

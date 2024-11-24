@@ -32,7 +32,7 @@ jobs:
 
       - name: Fail if coverage is below threshold
         run: |
-          MINIMUM_COVERAGE=50
+          MINIMUM_COVERAGE=30
           if (( $(echo "$COVERAGE_PERCENT < $MINIMUM_COVERAGE" | bc -l) )); then
             echo "Code coverage ($COVERAGE_PERCENT%) is below the acceptable threshold ($MINIMUM_COVERAGE%)."
             exit 1

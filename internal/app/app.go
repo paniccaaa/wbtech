@@ -79,7 +79,7 @@ func SetupDeserializer(cfg *Config, log *slog.Logger) (*jsonschema.Deserializer,
 	schemaClient, err := schemaregistry.NewClient(schemaregistry.NewConfig(cfg.Kafka.SchemaURI))
 	if err != nil {
 		log.Error("failed to create schema registry client", slog.String("err", err.Error()))
-		os.Exit(1)
+		// os.Exit(1)
 	}
 
 	deser, err := jsonschema.NewDeserializer(
@@ -89,7 +89,7 @@ func SetupDeserializer(cfg *Config, log *slog.Logger) (*jsonschema.Deserializer,
 	)
 	if err != nil {
 		log.Error("failed to create deserializer", slog.String("err", err.Error()))
-		os.Exit(1)
+		// os.Exit(1)
 	}
 
 	return deser, schemaClient

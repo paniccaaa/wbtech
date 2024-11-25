@@ -26,7 +26,7 @@ func main() {
 
 	log.Info("server started", slog.String("addr", cfg.Server.Addr))
 
-	producer, err := api.NewProducer(cfg, schemaClient)
+	producer, err := api.NewProducer(cfg, schemaClient, log)
 	if err != nil {
 		log.Error("failed to create producer", slog.String("err", err.Error()))
 	}

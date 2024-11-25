@@ -11,6 +11,29 @@ import (
 	"github.com/paniccaaa/wbtech/internal/model"
 )
 
+const orderTemplate = `
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<title>Order Details</title>
+	</head>
+	<body>
+		<h1>Order Details</h1>
+		<p><strong>Order ID:</strong> {{.OrderUID}}</p>
+		<p><strong>Track Number:</strong> {{.TrackNumber}}</p>
+		<p><strong>Customer ID:</strong> {{.CustomerID}}</p>
+		<p><strong>Status:</strong> {{.Payment.Transaction}}</p>
+		<p><strong>Total Amount:</strong> ${{.Payment.Amount}}</p>
+		<p><strong>Items:</strong></p>
+		<ul>
+			{{range .Items}}
+				<li>{{.Name}} ({{.Price}}) - Quantity: {{.Sale}} - Total Price: {{.TotalPrice}}</li>
+			{{end}}
+		</ul>
+	</body>
+	</html>
+`
+
 //go:generate mockery --name GetProvider
 type GetProvider interface {
 	GetOrder(ctx context.Context, orderUID model.OrderUID) (model.Order, error)
@@ -42,29 +65,6 @@ func HandleGetOrder(orderService GetProvider, log *slog.Logger) http.HandlerFunc
 			http.Error(w, fmt.Sprintf("failed to get order: %v", err), http.StatusInternalServerError)
 			return
 		}
-
-		orderTemplate := `
-			<!DOCTYPE html>
-			<html>
-			<head>
-				<title>Order Details</title>
-			</head>
-			<body>
-				<h1>Order Details</h1>
-				<p><strong>Order ID:</strong> {{.OrderUID}}</p>
-				<p><strong>Track Number:</strong> {{.TrackNumber}}</p>
-				<p><strong>Customer ID:</strong> {{.CustomerID}}</p>
-				<p><strong>Status:</strong> {{.Payment.Transaction}}</p>
-				<p><strong>Total Amount:</strong> ${{.Payment.Amount}}</p>
-				<p><strong>Items:</strong></p>
-				<ul>
-					{{range .Items}}
-						<li>{{.Name}} ({{.Price}}) - Quantity: {{.Sale}} - Total Price: {{.TotalPrice}}</li>
-					{{end}}
-				</ul>
-			</body>
-			</html>
-		`
 
 		tmpl, err := template.New("order").Parse(orderTemplate)
 		if err != nil {

@@ -7,8 +7,6 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
-// const configPath = "./config/dev.yaml"
-
 type Config struct {
 	DB_URI string `yaml:"db_uri"`
 	Kafka  Kafka  `yaml:"kafka"`

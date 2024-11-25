@@ -3,7 +3,7 @@ package kafka
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -18,9 +18,10 @@ type Producer struct {
 	client       *kafka.Producer
 	schemaClient schemaregistry.Client
 	cfgKafka     app.Kafka
+	log          *slog.Logger
 }
 
-func NewProducer(cfg *app.Config, schemaClient schemaregistry.Client) (*Producer, error) {
+func NewProducer(cfg *app.Config, schemaClient schemaregistry.Client, log *slog.Logger) (*Producer, error) {
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": cfg.Kafka.URI,
 	})
@@ -32,6 +33,7 @@ func NewProducer(cfg *app.Config, schemaClient schemaregistry.Client) (*Producer
 		client:       p,
 		schemaClient: schemaClient,
 		cfgKafka:     cfg.Kafka,
+		log:          log,
 	}, nil
 }
 
@@ -63,7 +65,7 @@ func (p *Producer) StartProduce() error {
 
 	p.client.Flush(3 * 1000)
 
-	log.Println("Producer has finished sending messages to Kafka")
+	p.log.Info("Producer has finished sending messages to Kafka")
 
 	return nil
 }

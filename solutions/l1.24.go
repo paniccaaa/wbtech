@@ -15,10 +15,10 @@ type Point struct {
 }
 
 func (p *Point) Distance(otherPoint *Point) float64 {
-	dx := otherPoint.x - p.x
-	dy := otherPoint.y - p.y
+	x := otherPoint.x - p.x
+	y := otherPoint.y - p.y
 
-	return math.Sqrt(dx*dx + dy*dy)
+	return math.Sqrt(x*x + y*y)
 }
 
 func NewPoint(x, y float64) *Point {

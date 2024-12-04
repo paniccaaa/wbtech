@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	solutions.Solve16()
+	solutions.Solve21()
 }

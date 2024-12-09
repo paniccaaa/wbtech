@@ -18,10 +18,10 @@ func Solve3() {
 	squareChan := make(chan int, len(arr))
 	wg.Add(len(arr))
 	for _, v := range arr {
-		go func(v int) {
+		go func() {
 			defer wg.Done()
 			squareChan <- v * v
-		}(v)
+		}()
 	}
 
 	go func() {

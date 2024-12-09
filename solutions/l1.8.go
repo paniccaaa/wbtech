@@ -14,11 +14,18 @@ func Solve8() {
 		return num & ^(1 << i)
 	}
 
-	var num int64 = 66
+	// 65        = 1000001
+	// mask      = 00010000
+	// 65 | mask = 1010001
 
-	num = setBit(num, 4, true)
-	fmt.Println(num)
+	num := setBit(65, 4, true)
+	fmt.Println(num) // 81
 
-	num = setBit(num, 4, false)
-	fmt.Println(num)
+	// 65          = 1000001
+	// mask        = 00010000
+	// invert      = 11101111
+	// 65 | invert = 1000001
+
+	num2 := setBit(65, 4, false)
+	fmt.Println(num2) // 65
 }

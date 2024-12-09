@@ -26,10 +26,37 @@ func Solve7() {
 
 	wg.Add(100)
 	for i := range 100 {
-		go func(i int) {
+		go func() {
 			defer wg.Done()
 			example.set(i, i+10)
-		}(i)
+		}()
 	}
 	wg.Wait()
+}
+
+// worker pool
+func Solve7_1() {
+	var wg sync.WaitGroup
+
+	example := cmap{m: make(map[int]int)}
+	ch := make(chan int)
+
+	go func() {
+		for i := range 100 {
+			ch <- i
+		}
+		close(ch)
+	}()
+
+	wg.Add(5)
+	for range 5 {
+		go func() {
+			defer wg.Done()
+			for v := range ch {
+				example.set(v, v+20)
+			}
+		}()
+	}
+	wg.Wait()
+
 }

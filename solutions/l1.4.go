@@ -17,7 +17,6 @@ import (
 // Выбрать и обосновать способ завершения работы всех воркеров
 
 func Solve4() {
-
 	var numWorkers = flag.Int("worker", 1, "num of workers")
 	flag.Parse()
 
@@ -44,7 +43,7 @@ func Solve4() {
 		}
 	}()
 
-	wg.Add(1)
+	wg.Add(*numWorkers)
 	for w := range *numWorkers {
 		go func() {
 			defer wg.Done()

@@ -19,7 +19,7 @@ func Solve5() {
 	duration := 10 * time.Second
 	done := time.After(duration)
 
-	go writer(ch, &wg, done)
+	go writer(ch, done)
 
 	wg.Add(1)
 	go reader(ch, &wg)
@@ -29,8 +29,7 @@ func Solve5() {
 	fmt.Println("end")
 }
 
-func writer(ch chan int, wg *sync.WaitGroup, done <-chan time.Time) {
-	defer wg.Done()
+func writer(ch chan int, done <-chan time.Time) {
 	i := 1
 	for {
 		select {

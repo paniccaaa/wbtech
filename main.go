@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/paniccaaa/wbtech/solutions"
+	"fmt"
 )
 
 func main() {
-	solutions.Solve5()
+	fmt.Println(1)
 }

@@ -1,9 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"github.com/paniccaaa/wbtech/develop/dev01"
 )
 
 func main() {
-	fmt.Println(1)
+	_, err := dev01.Now()
+	if err != nil {
+		panic(err)
+	}
 }

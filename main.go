@@ -1,12 +1,15 @@
 package main
 
 import (
-	"github.com/paniccaaa/wbtech/develop/dev01"
+	"fmt"
+
+	"github.com/paniccaaa/wbtech/develop/dev02"
 )
 
 func main() {
-	_, err := dev01.Now()
+	str, err := dev02.Unpack("45")
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(str, str == "aaaabccddddde") // my = aaaabcccdddddde || expected = aaaabccddddde
 }

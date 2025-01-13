@@ -1,7 +1,8 @@
 package dev01
 
 import (
-	"fmt"
+	"log/slog"
+	"os"
 	"time"
 
 	"github.com/beevik/ntp"
@@ -19,22 +20,12 @@ import (
 Программа должна проходить проверки go vet и golint.
 */
 
-type S struct {
-	t time.Time
-}
-
-func Now() (S, error) {
-	var res S
-
+func Now() time.Time {
 	t, err := ntp.Time("0.beevik-ntp.pool.ntp.org")
 	if err != nil {
-		return S{}, err
+		slog.Error("failed to get time from ntp server", slog.String("err", err.Error()))
+		os.Exit(1)
 	}
 
-	res.t = t
-
-	fmt.Println("ntp", t)
-	fmt.Println(time.Now())
-
-	return res, nil
+	return t
 }
